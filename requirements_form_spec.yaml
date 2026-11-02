@@ -1,0 +1,300 @@
+meta:
+  doc: requirements-gathering form spec + project context
+  purpose: build a mobile-first web form (+ backend) that a non-technical client fills to define an Android app for his wholesale plumbing business
+  author_role: freelance developer (India); client = wholesale plumbing material owner
+  consumers: [ChatGPT, Codex]
+  revision: 2
+  revision_notes: "Preserves the original 83 questions and adds I1a, I5a, and I15; clarifies I4 and I11; updates tier-specific completion estimates. New questions are proposed clarifications for the client, not confirmed requirements."
+
+project:
+  client_business: wholesale plumbing materials (B2B, India, GST applies)
+  deliverable: Android app (client asked only for this)
+  original_idea:
+    - buyers browse products, add to cart, place orders
+    - owner sees orders, ships, records payments (advance or later) manually
+    - payment gateway: credit card with EMI (EMI handled by customer's bank + gateway; owner receives full amount minus fees)
+    - after N=5 successful transactions owner manually sets credit days per customer (any number: 15/20/25/45)
+    - customer orders on credit, ships, per-invoice counter starts
+    - reminder to customer ~5 days before due date; after due date customer cannot place orders
+    - daily owner page: customers with exhausted credit, sort + filters, oldest overdue to latest
+  open_scope_question: client may want only a manual credit-day tracker OR full e-commerce + inventory; form must decide this first
+  web_panel: optional phase 2 admin web (client did not ask); ask in form, price separately
+
+scope_tiers:
+  T1_credit_tracker:
+    desc: invoices and orders handled manually outside app; app only stores customers, manual invoice entries, credit days, starts counter, reminders, overdue page
+    includes: [customer records, manual invoice entry (no, amount, date, optional PDF upload), manual payment entry, credit days + limit, counter, reminders, overdue page + filters, staff roles, excel export]
+    excludes: [catalogue, cart, orders, stock, gateway, auto invoices]
+  T2_ordering_app:
+    desc: catalogue + cart + orders + manual payments + credit module; no stock tracking, no gateway
+    includes: [T1 features, products, customer-wise prices, cart, order status flow, delivery details, invoices (auto or manual), returns basics]
+    excludes: [inventory tracking, payment gateway/EMI]
+  T3_full_ecommerce:
+    desc: complete e-commerce + inventory + gateway + EMI + GST invoices + reports
+    includes: [T2 features, stock tracking, low-stock alerts, payment gateway, EMI, GST invoice generation, credit notes, advanced reports, accounting export]
+  gating: question A1 selects tier; sections/questions carry tiers list t:[1,2,3]; hide non-applicable ones; if 'not sure' show T2 questions and flag for call
+
+architecture_notes:
+  backend_required: true
+  reason: orders, credit counters, reminders, order blocking need server + daily scheduled job
+  app_model: one app, two roles (customer, owner/staff); role enforced server-side, not by hiding screens
+  auth: approved-buyer login; wholesale prices hidden until approved
+  price_logic: server returns only the logged-in customer's price; price locked on order and invoice
+  payments: store each payment separately; settle oldest invoice first; record mode (cash, cheque, UPI, bank transfer), reference no, entered_by; audit log, no silent edits
+  gateway_options: [Razorpay, Cashfree, PayU]
+  gateway_notes: no-cost EMI usually costs seller (interest); gateway fee borne by seller unless passed on
+  notifications: push + optionally WhatsApp/SMS; at 5 days before, on due date, when overdue
+  credit_edge_cases:
+    - define successful transaction (cancelled/returned/refunded/unpaid)
+    - minimum order value
+    - credit amount limit not only days
+    - counter start point (invoice/shipping/delivery)
+    - partial payments
+    - multiple open invoices
+    - block rule (any overdue vs total over limit)
+    - grace/one-time unblock
+    - owner approval queue with badge instead of popup
+    - edit/revoke credit
+    - returns/disputes put invoice on hold or credit note
+  order_flow: [placed, confirmed, packed, shipped, delivered, cancelled, returned]
+  stock_edge: two buyers ordering last item (T3)
+  play_store: avoid contacts/photos permissions (use system photo picker); fill Data safety honestly; privacy policy needed; Play developer account in client's name
+  web_admin: shared backend makes later web panel cheaper
+
+form_spec:
+  type: mobile-first web page, link opened on phone, no install
+  language: simple English, short questions, no jargon, plain examples (Hindi optional, ask in form)
+  length: "86 question definitions across all tiers; expected applicable counts: T1 49, T2 78, T3 85; estimated completion: T1 15-20 min, T2 25-35 min, T3 30-40 min"
+  per_question:
+    - tappable option chips (single or multi select)
+    - option marked 'Suggested'
+    - include 'Not sure - you decide for me' where a client may reasonably be unsure; avoid adding it where it would be meaningless or conflict with the question's choices
+    - free text box 'Your own answer / note' below options
+    - optional 'See example' button that expands grey wireframe
+  ux:
+    - one section per screen, progress bar, section title + short intro
+    - autosave on every answer, resume later via same link
+    - branching by tier from A1
+    - big touch targets, readable font, works on small screens
+    - sketch disclaimer under wireframes: 'Sample only. Final design may differ.'
+  wireframe_style: "grey, boxes + labels + sample text (e.g. Plumbing Pipe 1 inch, Rs 120), neat/clean, no brand colours/logos, drawn inline (SVG/HTML), no image files"
+  start_screen:
+    title: Things to keep nearby
+    checklist: [your logo (if you have one), product list in Excel (if available), your GST number, a sample bill, customer list (if available)]
+  final_screen:
+    - Submit (saves to backend)
+    - Send on WhatsApp (prefilled wa.me message to owner's number, placeholder)
+    - Copy answers
+    - Share as file (text)
+    - if WhatsApp text too long, auto-switch to copy/share with simple instruction
+  summary_format: 'Qn. question? Answer: option. Note: text'
+  excluded: pricing and budget questions (handled separately)
+
+backend_spec:
+  storage: save answer per question with timestamp, status draft|submitted, tier selected
+  access: private link with long random token; no login for client
+  secrets: DB keys only server-side, never in page code
+  hosting_free_options:
+    pages: [Cloudflare Pages, Netlify, Vercel]
+    storage: [Supabase, Firebase]
+  admin_view: developer sees all answers, 'Not sure' list, notes; export xlsx/pdf/json
+  backup: export answers to file on submit
+  owner_whatsapp_number: PLACEHOLDER_with_country_code
+  developer_stack: UNKNOWN - ask before coding
+
+sections:
+  - id: A
+    title: What do you want the app to do
+    t: [1,2,3]
+    qs:
+      - {id: A1, q: "Which one sounds closest to what you want?", opts: ["Only track credit: I make bills myself, app keeps customer credit days and reminders (T1)", "Customers order in app, I record payments and manage credit (T2)", "Complete online shop with stock, online payment, auto GST bills and reports (T3)", "Not sure"], rec: "T2", gating: true, fallback: {when_answer: "Not sure", tier: 2}}
+      - {id: A2, q: "Do you also want a website version for you and your customers (now or later)?", opts: ["Not now", "Later, as a second phase", "Yes, along with the app", "Not sure"], rec: "Later, as a second phase"}
+  - id: B
+    title: About your business
+    t: [1,2,3]
+    qs:
+      - {id: B1, q: "How many customers (shops/contractors) will use the app?", opts: ["Under 50", "50 to 200", "200 to 1000", "More than 1000"]}
+      - {id: B2, q: "How many different products do you sell?", t: [2,3], opts: ["Under 100", "100 to 500", "500 to 2000", "More than 2000"]}
+      - {id: B3, q: "Where do you deliver?", t: [2,3], opts: ["Same city only", "Nearby cities/districts", "Across the state", "All India"]}
+      - {id: B4, q: "How many of your staff will use the app?", opts: ["Only me", "2 to 3 people", "4 to 10 people", "More than 10"]}
+      - {id: B5, q: "Is your GST (Goods and Services Tax) number ready to add to bills?", opts: ["Yes, I will share it", "Not registered for GST"]}
+  - id: C
+    title: Your products
+    t: [2,3]
+    qs:
+      - {id: C1, q: "Who will add products to the app?", opts: ["I or my staff, one by one", "Upload from an Excel sheet", "Developer adds them for me initially", "Not sure"], rec: "Upload from an Excel sheet"}
+      - {id: C2, q: "Do products come in sizes, brands or types?", opts: ["Yes, many (e.g. 1/2 inch, 3/4 inch, brands)", "A few", "No"]}
+      - {id: C3, q: "How do you sell items?", opts: ["By piece", "By box/bundle", "By metre/length", "Mix of these"]}
+      - {id: C4, q: "Do you have photos of the products?", opts: ["Yes, for most", "For some", "No, need to take them"]}
+      - {id: C5, q: "Should the app count your stock?", t: [3], opts: ["Yes, reduce stock automatically on each order", "No, I will mark items 'available / not available' myself", "Not sure"], rec: "No, I will mark items 'available / not available' myself", note: "Keeping stock counts up to date can add cost and work."}
+      - {id: C6, q: "When an item is out of stock, what should customers see?", t: [2,3], opts: ["Item hidden", "Shown as 'Out of stock', cannot order", "Can order, will be supplied later"], rec: "Shown as 'Out of stock', cannot order"}
+      - {id: C7, q: "Should the app warn you when stock is low?", t: [3], opts: ["Yes", "No"]}
+  - id: D
+    title: Your customers
+    t: [1,2,3]
+    qs:
+      - {id: D1, q: "How should new customers join?", opts: ["Anyone can sign up, I approve before they can order", "Only customers I add myself", "Anyone can sign up and order directly"], rec: "Anyone can sign up, I approve before they can order"}
+      - {id: D2, q: "What details do you need from a customer?", multi: true, opts: ["Shop name and phone", "GST number", "Shop photo", "Address", "ID proof"]}
+      - {id: D3, q: "Can one customer have more than one delivery address?", t: [2,3], opts: ["Yes", "No, one address"]}
+      - {id: D4, q: "Can several people from one shop use one customer account?", opts: ["Yes", "No, one login per shop"]}
+      - {id: D5, q: "Do you already have a customer list to put in the app?", opts: ["Yes, in Excel", "Yes, in a register/notebook", "No"]}
+  - id: E
+    title: Prices
+    t: [2,3]
+    qs:
+      - {id: E1, q: "Who should see prices?", opts: ["Only approved customers after login", "Everyone who opens the app", "Nobody; customers must ask for a price"], rec: "Only approved customers after login", wf: wf_product_list_price}
+      - {id: E2, q: "Is price the same for every customer?", opts: ["Same for all", "Different groups (e.g. A, B, C)", "Different for each customer", "Groups plus some special prices"], rec: "Groups plus some special prices", wf: wf_price_groups}
+      - {id: E3, q: "Do you give cheaper rates on bigger quantity?", opts: ["Yes (e.g. 50+ pieces cheaper)", "No"], wf: wf_qty_slabs}
+      - {id: E4, q: "Should prices show with GST or without?", opts: ["With GST included", "Without GST, added at checkout", "Not sure"]}
+      - {id: E5, q: "Do some items have a minimum order quantity?", opts: ["Yes", "No"]}
+      - {id: E6, q: "If you change a price, what happens to orders already placed?", opts: ["They keep the old price", "They change to new price"], rec: "They keep the old price"}
+      - {id: E7, q: "Should customers be able to ask for a special rate inside the app?", opts: ["Yes", "No"]}
+  - id: F
+    title: Orders
+    t: [2,3]
+    qs:
+      - {id: F1, q: "Do you want to accept each order before it is confirmed?", opts: ["Yes, I confirm every order", "Auto-confirm normal orders, I check big ones", "Auto-confirm all"], rec: "Yes, I confirm every order", wf: wf_order_list_owner}
+      - {id: F2, q: "Is there a minimum order value?", opts: ["Yes", "No"]}
+      - {id: F3, q: "Can customers cancel or change an order after placing it?", opts: ["Until I confirm it", "Until it is packed", "No changes", "Not sure"], rec: "Until I confirm it"}
+      - {id: F4, q: "If some items are short, what should happen?", opts: ["Send what is available, rest later", "Hold the whole order", "I decide each time"]}
+      - {id: F5, q: "Should customers be able to repeat an old order in one tap?", opts: ["Yes", "No"]}
+      - {id: F6, q: "Which order steps do you want to show?", multi: true, opts: ["Placed", "Confirmed", "Packed", "Shipped", "Delivered", "Cancelled", "Returned"], wf: wf_order_tracking}
+  - id: G
+    title: Delivery
+    t: [2,3]
+    qs:
+      - {id: G1, q: "How do you send goods?", multi: true, opts: ["Own vehicle", "Transport company/courier", "Customer picks up"]}
+      - {id: G2, q: "Do you charge for delivery?", opts: ["Free delivery", "Fixed charge", "Depends on distance or weight", "Depends on order value"]}
+      - {id: G3, q: "What delivery details should customers see?", multi: true, opts: ["Vehicle number or transport receipt number", "Transport name", "Expected date", "Delivery photo/proof"]}
+      - {id: G4, q: "Do you send one order in several parts sometimes?", opts: ["Yes", "No"]}
+  - id: H
+    title: Payments
+    t: [1,2,3]
+    qs:
+      - {id: H1, q: "How do customers pay you today?", multi: true, opts: ["Cash", "Cheque", "UPI", "Bank transfer", "Card"]}
+      - {id: H2, q: "Do customers pay part now and part later?", opts: ["Yes, often", "Sometimes", "No, full payment"]}
+      - {id: H3, q: "Who records payments in the app?", opts: ["Only me", "Me and selected staff"], rec: "Me and selected staff", wf: wf_payment_entry}
+      - {id: H4, q: "If a customer pays a part, which bill should it cover first?", opts: ["Oldest bill first", "I choose each time"], rec: "Oldest bill first"}
+      - {id: H5, q: "Do you want online payment (UPI/card/net banking) inside the app?", t: [3], opts: ["Yes", "No, I will record payments myself", "Later"], rec: "Later", note: "Online payment services can add setup costs and monthly fees."}
+      - {id: H6, q: "Do you want customers to pay by card in monthly instalments (EMI)?", t: [3], opts: ["Yes", "No", "Not sure"], note: "The customer's bank provides EMI. 'No-cost EMI' can still cost you interest."}
+      - {id: H7, q: "Who pays the online payment charges (about 2%)?", t: [3], opts: ["I pay", "Added to customer's bill", "Not sure"]}
+      - {id: H8, q: "If an order is cancelled after payment, how are refunds done?", opts: ["Refund to same method", "Keep as credit for next order", "I decide each time"]}
+  - id: I
+    title: Credit days
+    t: [1,2,3]
+    qs:
+      - {id: I1, q: "After how many successful orders should you be able to offer a customer credit?", opts: ["3", "5", "10", "I decide for each customer"], rec: "5"}
+      - {id: I1a, q: "Should you be able to give a customer credit before they complete the required number of successful orders?", opts: ["Yes, I can grant credit to any customer from day one", "No, the customer must first complete the required number of successful orders", "Not sure - you decide for me"], rec: "Yes, I can grant credit to any customer from day one", note: "This order count can remind you to think about giving credit. The app will never give credit by itself. You decide if and when to give it."}
+      - {id: I2, q: "Which orders count as 'successful'?", opts: ["Delivered and fully paid", "Delivered (payment can be pending)", "Not sure"], rec: "Delivered and fully paid"}
+      - {id: I3, q: "Do cancelled or returned orders count?", opts: ["No", "Yes"], rec: "No"}
+      - {id: I4, q: "When a customer completes this number of successful orders, how should the app let you know?", opts: ["A home screen list showing how many customers reached this order count", "A popup", "Notification"], rec: "A home screen list showing how many customers reached this order count", wf: wf_credit_eligible_list, note: "This is only a reminder to consider giving credit. The app will never give credit automatically. You decide."}
+      - {id: I5, q: "Besides days, do you want to set a money limit (e.g. Rs 2 lakh, 30 days)?", opts: ["Yes, days and amount limit", "Only days"], rec: "Yes, days and amount limit"}
+      - {id: I5a, q: "What should the credit amount limit apply to?", opts: ["Total outstanding amount across all unpaid invoices", "Maximum amount allowed on an individual invoice", "Both", "Not sure - you decide for me"], note: "Example: if a customer has three unpaid invoices of Rs 30,000 each, a total-outstanding limit considers Rs 90,000 already used. An individual-invoice limit checks each invoice separately."}
+      - {id: I6, q: "When should the credit days counting start?", opts: ["Invoice date", "Dispatch date", "Delivery date"], rec: "Invoice date"}
+      - {id: I7, q: "When should the customer get reminders?", multi: true, opts: ["5 days before", "3 days before", "On the due date", "Every few days after due date"], rec: "5 days before + on the due date", wf: wf_reminder_notification}
+      - {id: I8, q: "How should reminders reach the customer?", multi: true, opts: ["App notification", "WhatsApp", "SMS"]}
+      - {id: I9, q: "When should a customer be stopped from placing orders?", opts: ["When any bill is past its due date", "When the customer's unpaid bills go over the limit", "Both"], rec: "Both"}
+      - {id: I10, q: "Should you be able to allow a good customer a few extra days or a one-time order?", opts: ["Yes", "No"], rec: "Yes"}
+      - {id: I11, q: "What should you be able to do with a customer's credit?", opts: ["Start, change or stop credit at any time", "Change it only after the customer pays all unpaid bills", "Not sure - you decide for me"], rec: "Start, change or stop credit at any time"}
+      - {id: I12, q: "Do you charge extra for late payment?", opts: ["No", "Yes, fixed amount", "Yes, percentage per month"]}
+      - {id: I13, q: "If goods are damaged or wrong, should the bill's counting pause?", opts: ["Yes, I can put the bill on hold", "No"], rec: "Yes, I can put the bill on hold"}
+      - {id: I14, q: "T1 only: how will you enter a bill?", t: [1], opts: ["Bill number, amount, date, due days", "Also upload photo/PDF of the bill"], wf: wf_manual_invoice_entry}
+      - {id: I15, q: "If a customer makes a partial payment, how should the remaining amount be handled?", opts: ["Keep the remaining amount against the same invoice, with its original due date", "Recalculate the remaining amount's due date from the payment date", "Let me decide manually for each invoice", "Not sure - you decide for me"], rec: "Keep the remaining amount against the same invoice, with its original due date"}
+  - id: J
+    title: Bills and GST
+    t: [1,2,3]
+    qs:
+      - {id: J1, q: "Who makes the bills?", t: [2,3], opts: ["I make them myself outside the app", "App makes them automatically", "Not sure"]}
+      - {id: J2, q: "Do you use accounting software?", opts: ["Tally", "Busy", "Other", "None"]}
+      - {id: J3, q: "Do you want to export bills/payments to your accounts software or Excel?", opts: ["Yes", "No"]}
+      - {id: J4, q: "Do you have each product's GST rate and HSN product tax code ready?", t: [3], opts: ["Yes", "Some", "No"]}
+      - {id: J5, q: "Do you need a digital tax invoice (e-invoice) or a goods transport document (e-way bill)?", t: [3], opts: ["Yes", "No", "Don't know"]}
+      - {id: J6, q: "Can you share a sample of your current bill?", opts: ["Yes, will send", "No"]}
+  - id: K
+    title: Returns and damages
+    t: [2,3]
+    qs:
+      - {id: K1, q: "Do you accept returns?", opts: ["Yes, within some days", "Only for damaged/wrong items", "No returns"]}
+      - {id: K2, q: "How many days to report a problem?", opts: ["2", "7", "15", "Not sure"]}
+      - {id: K3, q: "For approved returns, what does the customer get?", opts: ["Refund", "Credit note for next order", "Replacement"]}
+  - id: L
+    title: Alerts
+    t: [1,2,3]
+    qs:
+      - {id: L1, q: "What should alert you?", multi: true, opts: ["New order", "New customer signup", "Payment received", "Customer eligible for credit", "Low stock"]}
+      - {id: L2, q: "How should alerts reach you?", multi: true, opts: ["App notification", "WhatsApp", "SMS", "Email"]}
+  - id: M
+    title: Reports and late payments
+    t: [1,2,3]
+    qs:
+      - {id: M1, q: "Daily overdue page: what should you see?", multi: true, opts: ["Customer name", "Bill number", "Amount pending", "Days overdue", "Phone number with call button"], wf: wf_overdue_page}
+      - {id: M2, q: "Which filters do you want?", multi: true, opts: ["Days overdue", "Amount", "Customer", "Due date range", "Due in next 5 days"]}
+      - {id: M3, q: "Which sorting?", multi: true, opts: ["Most overdue first", "Highest amount first", "Latest bill first"]}
+      - {id: M4, q: "Do you want to download reports in Excel?", opts: ["Yes", "No"]}
+      - {id: M5, q: "Other reports?", t: [2,3], multi: true, opts: ["Sales by day/month", "Top customers", "Top products", "Payments received"]}
+  - id: N
+    title: What your staff can do
+    t: [1,2,3]
+    qs:
+      - {id: N1, q: "What can staff do?", multi: true, opts: ["View orders", "Update order status", "Record payments", "Change prices", "Approve credit", "Add products/customers"]}
+      - {id: N2, q: "What should only you be able to do?", multi: true, opts: ["Approve credit", "Change prices", "Delete anything", "See reports"]}
+  - id: O
+    title: App name, look and language
+    t: [1,2,3]
+    qs:
+      - {id: O1, q: "App language?", opts: ["English", "Hindi", "Both"]}
+      - {id: O2, q: "Do you have a logo and brand colours?", opts: ["Yes, will share", "Only logo", "No"]}
+      - {id: O3, q: "What should the app be called?", opts: ["Same as my business name", "New name"]}
+  - id: P
+    title: Starting and support
+    t: [1,2,3]
+    qs:
+      - {id: P1, q: "Play Store developer account?", opts: ["I will create it in my name (recommended)", "Not sure how"], rec: "I will create it in my name (recommended)"}
+      - {id: P2, q: "When do you want to start using the app?", opts: ["Within 1 month", "1 to 3 months", "No hurry"]}
+      - {id: P3, q: "Who will train your staff?", opts: ["Developer trains once", "Written guide/video", "Not needed"]}
+      - {id: P4, q: "Do you want yearly support (fixes, server care, updates)?", opts: ["Yes", "No", "Not sure"]}
+
+wireframes:
+  style: grey, mobile frame, boxes/labels, sample text
+  list:
+    - wf_product_list_price: "Customers see each product's name, size and price, with an Add button."
+    - wf_price_groups: "You set each customer in Group A, B or C and set the price for each product."
+    - wf_qty_slabs: "Price per item: Rs 120 for 1 to 49 items; Rs 110 for 50 or more."
+    - wf_order_list_owner: "You see orders with their status and a Confirm button."
+    - wf_order_tracking: "Customers see each order step, from placed to delivered."
+    - wf_payment_entry: "You record the bill, amount, payment type, reference number and date."
+    - wf_credit_eligible_list: "A list of customers who reached the order count, with days, amount limit and an Approve button."
+    - wf_reminder_notification: "Phone alert: Payment of Rs X is due in 5 days."
+    - wf_overdue_page: "A list of unpaid bills with filters, sorting, days late and a call button."
+    - wf_manual_invoice_entry: "Enter the bill number, amount, date and credit days, or upload the bill."
+    - also_optional: [cart, checkout, customer approval list]
+
+process:
+  goal: finalise in 1 sitting (max 2)
+  steps:
+    - client fills form alone over 1-2 days using suggested answers
+    - send the Please keep ready checklist first
+    - one ~45 min call covering only 'Not sure' answers + notes
+    - developer sends 1-page agreed-scope summary; client approves in writing
+    - optional 2nd sitting only for changes
+  scope_control: written sign-off; changes after sign-off = paid change request
+
+pricing_guidance:
+  note: price differs a lot by tier; no fixed numbers given
+  method: [list modules + hours per tier, multiply by hourly rate, add 20-30% buffer]
+  offer: three options T1 / T2 / T3
+  payment_milestones: [30% advance, 40% working demo, 30% delivery]
+  recurring_separate: [server, SMS/WhatsApp, gateway fees, Play account (client's name)]
+  maintenance: yearly 10-20% of project cost
+  web_admin: priced separately as phase 2
+  main_cost_drivers: [inventory tracking, payment gateway + EMI, auto GST invoices/e-invoice, WhatsApp/SMS integration, web panel, accounting export]
+
+tasks_for_ai:
+  - build mobile-first form frontend from sections[] (render chips + note box + Not sure + Suggested + See example)
+  - implement tier branching from A1 using t[] filters
+  - implement autosave + resume via private token link
+  - build backend storage + developer view + export xlsx/json
+  - implement final screen (Submit, WhatsApp prefilled, Copy, Share as file, long-text fallback)
+  - draw grey SVG/HTML wireframes listed above
+  - generate agreed-scope summary template from answers (grouped by section, 'Not sure' list highlighted)
+  - ask developer for stack, hosting choice, WhatsApp number before coding
