@@ -9,7 +9,7 @@ export default async function Home() {
   const checklist = spec.form_spec.start_screen.checklist
 
   return (
-    <main className="portal-shell min-h-screen overflow-hidden">
+    <main className="portal-shell min-h-screen">
       <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-5 sm:px-8 lg:px-12">
         <header className="flex items-center justify-between py-6 sm:py-8">
           <a href="#home" className="brand-mark" aria-label="Qontrac Industries home">

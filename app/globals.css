@@ -56,9 +56,23 @@
   color-scheme: dark;
   --background: #190d2b;
   --background-deep: #12091f;
-  --ambient-amethyst: rgb(117 82 170 / 18%);
-  --ambient-royal: rgb(86 53 138 / 10%);
-  --ambient-emerald: rgb(8 127 104 / 4%);
+  --gl-tint: 66 42 102;
+  --gl-tint-hi: 96 70 140;
+  --gl-smoke: 20 13 32;
+  --gl-field: 10 6 20;
+  --gl-jade: 10 142 114;
+  --gl-lilac: 226 213 255;
+  --gl-alpha-plate: 0.40;
+  --gl-alpha-card: 0.20;
+  --gl-alpha-option: 0.20;
+  --gl-alpha-selected: 0.40;
+  --gl-alpha-field: 0.30;
+  --gl-blur-plate: 20px;
+  --gl-blur-mobile: 14px;
+  --gl-saturation: 150%;
+  --gl-saturation-mobile: 140%;
+  --gl-edge: rgb(226 213 255 / 25%);
+  --gl-reflection: rgb(255 255 255 / 13%);
   --foreground: #f8f4ff;
   --surface-raised: #302044;
   --surface-raised-2: #40295f;
@@ -71,13 +85,13 @@
   --amethyst-light: #d8c5ff;
   --emerald-light: #75d7b0;
   --specular-edge: rgb(236 224 255 / 42%);
-  --glass-main: rgb(48 32 68 / 56%);
-  --glass-raised: rgb(57 41 81 / 58%);
-  --glass-question: rgb(52 37 74 / 38%);
-  --glass-option: rgb(38 29 51 / 48%);
-  --glass-selected: rgb(20 91 80 / 62%);
-  --glass-input: rgb(18 13 28 / 56%);
-  --glass-button: rgb(48 34 68 / 62%);
+  --glass-main: rgb(var(--gl-tint) / var(--gl-alpha-plate));
+  --glass-raised: rgb(var(--gl-tint-hi) / var(--gl-alpha-card));
+  --glass-question: rgb(var(--gl-tint-hi) / var(--gl-alpha-card));
+  --glass-option: rgb(var(--gl-smoke) / var(--gl-alpha-option));
+  --glass-selected: rgb(var(--gl-jade) / var(--gl-alpha-selected));
+  --glass-input: rgb(var(--gl-field) / var(--gl-alpha-field));
+  --glass-button: rgb(var(--gl-tint) / 0.46);
   --glass-reflection: rgb(255 255 255 / 14%);
   --card: #32145e;
   --card-foreground: #f8f4ff;
@@ -147,14 +161,23 @@ textarea {
 .questionnaire-shell {
   position: relative;
   isolation: isolate;
-  overflow: hidden;
-  min-height: 100svh;
-  min-height: 100dvh;
-  background-color: var(--background);
+  overflow-x: clip;
+  background: transparent;
+}
+
+.portal-shell::before,
+.questionnaire-shell::before {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
   background-image:
-    radial-gradient(ellipse 70% 55% at 14% 7%, var(--ambient-amethyst), transparent 76%),
-    radial-gradient(ellipse 50% 45% at 76% 62%, var(--ambient-emerald), transparent 82%),
-    radial-gradient(ellipse 65% 50% at 50% 100%, var(--ambient-royal), transparent 78%);
+    radial-gradient(ellipse 72% 54% at 10% 8%, rgb(var(--gl-tint-hi) / 0.34), transparent 76%),
+    radial-gradient(ellipse 42% 38% at 88% 24%, rgb(117 69 214 / 0.20), transparent 78%),
+    radial-gradient(ellipse 46% 44% at 82% 78%, rgb(var(--gl-jade) / 0.14), transparent 78%),
+    radial-gradient(ellipse 58% 42% at 28% 88%, rgb(86 53 138 / 0.22), transparent 78%),
+    linear-gradient(180deg, #1b0c31 0%, #140a25 52%, #0e0719 100%);
+  content: "";
+  pointer-events: none;
 }
 
 .brand-mark {
@@ -165,13 +188,13 @@ textarea {
 }
 
 .landing-hero-panel {
+  position: relative;
+  isolation: isolate;
   border: 1px solid rgb(201 164 92 / 14%);
   border-radius: 1.6rem;
-  background: linear-gradient(145deg, rgb(48 32 68 / 35%), rgb(48 32 68 / 12%));
+  background: transparent;
   padding: 1.25rem;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 9%), 0 20px 48px rgb(5 2 14 / 16%);
-  -webkit-backdrop-filter: blur(16px) saturate(135%);
-  backdrop-filter: blur(16px) saturate(135%);
+  box-shadow: var(--shadow-deep), inset 0 1px 0 rgb(255 255 255 / 0.08);
 }
 
 .brand-name {
@@ -228,45 +251,71 @@ textarea {
 }
 
 .glass-surface,
-.preview-notice,
-.progress-panel {
+.preview-notice {
   border: 1px solid rgb(201 164 92 / 17%);
   background-color: var(--glass-main);
   background-image:
     radial-gradient(ellipse at 8% 0%, rgb(216 197 255 / 9%), transparent 24rem),
     linear-gradient(145deg, rgb(64 41 95 / 22%), rgb(48 32 68 / 25%));
   box-shadow: inset 0 1px 0 var(--glass-reflection), inset 0 -1px 0 rgb(13 7 24 / 40%), 0 18px 44px rgb(5 2 14 / 32%);
-  -webkit-backdrop-filter: blur(16px) saturate(135%);
-  backdrop-filter: blur(16px) saturate(135%);
+}
+
+.preview-notice,
+.progress-panel {
+  -webkit-backdrop-filter: blur(16px) saturate(var(--gl-saturation));
+  backdrop-filter: blur(16px) saturate(var(--gl-saturation));
 }
 
 .preparation-card {
   position: relative;
-  overflow: hidden;
+  isolation: isolate;
   border: 1px solid rgb(201 164 92 / 22%);
   border-radius: 1.6rem;
-  background-color: var(--glass-raised);
-  background-image:
-    radial-gradient(ellipse at 84% 4%, rgb(216 197 255 / 13%), transparent 19rem),
-    radial-gradient(ellipse at 100% 100%, rgb(8 127 104 / 7%), transparent 22rem),
-    linear-gradient(145deg, rgb(73 54 106 / 35%) 0%, rgb(53 38 76 / 38%) 46%, rgb(36 27 50 / 44%) 100%);
+  background: transparent;
   padding: 1.5rem;
-  box-shadow: var(--shadow-deep), inset 0 1px 0 rgb(247 237 255 / 17%), inset 0 -1px 0 rgb(11 4 22 / 46%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: var(--shadow-deep);
 }
 
+.landing-hero-panel::before,
 .preparation-card::before,
 .journey-card::before,
-.questionnaire-main-surface::before,
-.question-panel::before,
-.invalid-link-card::before {
+.questionnaire-main-surface::before {
   position: absolute;
-  top: 0;
-  left: 8%;
-  width: 60%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgb(229 207 255 / 64%) 40%, rgb(117 215 176 / 32%) 64%, transparent);
+  z-index: -1;
+  inset: 0;
+  border: 1px solid rgb(var(--gl-tint) / var(--gl-alpha-plate));
+  border-radius: inherit;
+  background:
+    radial-gradient(ellipse at 92% 0%, rgb(var(--gl-lilac) / 0.10), transparent 42%),
+    linear-gradient(145deg, rgb(var(--gl-tint-hi) / 0.12), rgb(var(--gl-smoke) / 0.08));
+  background-color: rgb(var(--gl-tint) / var(--gl-alpha-plate));
+  content: "";
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(var(--gl-blur-plate)) saturate(var(--gl-saturation));
+  backdrop-filter: blur(var(--gl-blur-plate)) saturate(var(--gl-saturation));
+}
+
+.landing-hero-panel::before {
+  border-color: rgb(var(--gl-lilac) / 0.18);
+  background-color: rgb(var(--gl-tint) / 0.34);
+  background-image: linear-gradient(145deg, rgb(var(--gl-tint-hi) / 0.20), rgb(var(--gl-smoke) / 0.10));
+  -webkit-backdrop-filter: blur(18px) saturate(var(--gl-saturation));
+  backdrop-filter: blur(18px) saturate(var(--gl-saturation));
+}
+
+.landing-hero-panel::after,
+.preparation-card::after,
+.journey-card::after,
+.questionnaire-main-surface::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border: 1px solid rgb(var(--gl-lilac) / 0.12);
+  border-radius: inherit;
+  background:
+    linear-gradient(115deg, rgb(255 255 255 / 0.09), transparent 18% 78%, rgb(117 215 176 / 0.035)),
+    linear-gradient(180deg, rgb(255 255 255 / 0.06), transparent 18%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16), inset 1px 0 0 rgb(255 255 255 / 0.04), inset 0 -1px 0 rgb(10 3 20 / 0.18);
   content: "";
   pointer-events: none;
 }
@@ -276,17 +325,16 @@ textarea {
   background-color: var(--glass-raised);
   background-image:
     linear-gradient(138deg, rgb(226 213 255 / 5%), transparent 45%),
-    linear-gradient(130deg, rgb(64 41 95 / 79%), rgb(48 32 68 / 84%));
+    linear-gradient(130deg, rgb(var(--gl-tint-hi) / 0.28), rgb(var(--gl-smoke) / 0.32));
   color: #f2eaff;
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 12%), inset 0 -1px 0 rgb(11 6 20 / 32%), 0 8px 18px rgb(7 2 16 / 22%);
 }
 
 .private-badge {
   border: 1px solid rgb(201 164 92 / 23%);
-  background: linear-gradient(135deg, rgb(64 41 95 / 91%), rgb(48 32 68 / 94%));
+  background: linear-gradient(135deg, rgb(var(--gl-tint-hi) / 0.42), rgb(var(--gl-smoke) / 0.48));
   color: #e7dbff;
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 12%), 0 7px 18px rgb(7 2 15 / 24%);
-  backdrop-filter: blur(14px);
 }
 
 .clock-badge {
@@ -331,7 +379,6 @@ textarea {
     radial-gradient(ellipse at 54% 38%, rgb(169 138 239 / 22%), transparent 58%),
     radial-gradient(ellipse at 48% 68%, rgb(81 37 165 / 16%), transparent 65%),
     radial-gradient(ellipse at 88% 78%, rgb(8 127 104 / 12%), transparent 52%);
-  filter: blur(0.15px);
   box-shadow: inset 0 0 45px rgb(117 69 214 / 8%), 0 0 80px rgb(81 37 165 / 12%);
   transform: rotate(-9deg);
 }
@@ -342,14 +389,12 @@ textarea {
   border: 1px solid rgb(236 224 255 / 52%);
   border-radius: 999px;
   background-color: var(--surface-interactive);
-  background-image: linear-gradient(115deg, rgb(86 53 138 / 94%) 0%, rgb(117 82 170 / 91%) 58%, rgb(146 117 189 / 88%) 100%);
+  background-image: linear-gradient(115deg, rgb(86 53 138 / 0.78) 0%, rgb(117 82 170 / 0.72) 58%, rgb(146 117 189 / 0.66) 100%);
   color: #fff;
   font-weight: 650;
   text-decoration: none;
   box-shadow: 0 12px 28px rgb(9 3 22 / 38%), 0 4px 12px rgb(117 69 214 / 26%), inset 0 1px 0 rgb(255 255 255 / 35%), inset 0 -2px 0 rgb(31 10 65 / 44%);
   transition: box-shadow 180ms ease, filter 180ms ease, transform 180ms ease;
-  -webkit-backdrop-filter: blur(10px) saturate(130%);
-  backdrop-filter: blur(10px) saturate(130%);
 }
 
 .primary-button::before {
@@ -384,14 +429,12 @@ textarea {
   border: 1px solid rgb(201 164 92 / 20%);
   border-radius: 999px;
   background-color: var(--glass-button);
-  background-image: linear-gradient(135deg, rgb(64 41 95 / 76%), rgb(48 32 68 / 83%));
+  background-image: linear-gradient(135deg, rgb(var(--gl-tint-hi) / 0.46), rgb(var(--gl-smoke) / 0.52));
   padding: 0.65rem 1.15rem;
   color: #eee5ff;
   font-size: 0.875rem;
   font-weight: 620;
   box-shadow: inset 0 1px 0 var(--glass-reflection), inset 0 -1px 0 rgb(12 6 23 / 38%), 0 7px 16px rgb(6 2 16 / 26%);
-  -webkit-backdrop-filter: blur(10px) saturate(130%);
-  backdrop-filter: blur(10px) saturate(130%);
   transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 }
 
@@ -418,6 +461,12 @@ textarea {
   transform: translateY(1px) scale(0.99);
 }
 
+.secondary-button--compact {
+  min-height: 2.5rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.75rem;
+}
+
 .primary-button:focus-visible,
 .secondary-button:focus-visible,
 .option-button:focus-visible,
@@ -430,35 +479,23 @@ textarea:focus-visible {
 
 .journey-card {
   position: relative;
-  overflow: hidden;
+  isolation: isolate;
   border: 1px solid rgb(201 164 92 / 20%);
   border-radius: 1.6rem;
-  background-color: var(--glass-raised);
-  background-image:
-    radial-gradient(ellipse at 86% 0%, rgb(216 197 255 / 11%), transparent 22rem),
-    radial-gradient(ellipse at 100% 100%, rgb(8 127 104 / 5%), transparent 25rem),
-    linear-gradient(145deg, rgb(73 54 106 / 34%) 0%, rgb(53 38 76 / 38%) 48%, rgb(36 27 50 / 44%) 100%);
+  background: transparent;
   padding: 1.4rem;
-  box-shadow: var(--shadow-deep), inset 0 1px 0 rgb(255 255 255 / 17%), inset 0 -1px 0 rgb(11 4 22 / 50%), inset 1px 0 0 rgb(255 255 255 / 4%);
-  -webkit-backdrop-filter: blur(16px) saturate(135%);
-  backdrop-filter: blur(16px) saturate(135%);
+  box-shadow: var(--shadow-deep);
 }
 
 .questionnaire-main-surface {
   position: relative;
   isolation: isolate;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid rgb(201 164 92 / 18%);
   border-radius: 1.6rem;
-  background-color: var(--glass-main);
-  background-image:
-    radial-gradient(ellipse at 92% 0%, rgb(216 197 255 / 12%), transparent 27rem),
-    radial-gradient(ellipse at 5% 100%, rgb(8 127 104 / 4%), transparent 30rem),
-    linear-gradient(145deg, rgb(64 41 95 / 25%), rgb(48 32 68 / 30%));
+  background: transparent;
   padding: 1.1rem;
-  box-shadow: var(--shadow-deep), inset 0 1px 0 rgb(255 255 255 / 14%), inset 0 -1px 0 rgb(11 4 22 / 36%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  backdrop-filter: blur(20px) saturate(140%);
+  box-shadow: var(--shadow-deep);
 }
 
 .question-panel {
@@ -468,11 +505,22 @@ textarea:focus-visible {
   border-radius: 1.25rem;
   background-color: var(--glass-question);
   background-image:
-    radial-gradient(ellipse at 88% 0%, color-mix(in srgb, var(--amethyst-light) 10%, transparent), transparent 19rem),
-    radial-gradient(ellipse at 8% 100%, rgb(117 82 170 / 5%), transparent 24rem),
-    linear-gradient(145deg, rgb(80 58 115 / 25%) 0%, rgb(57 40 81 / 28%) 44%, rgb(39 29 55 / 33%) 100%);
+    radial-gradient(ellipse at 88% 0%, rgb(var(--gl-lilac) / 0.05), transparent 19rem),
+    linear-gradient(145deg, rgb(var(--gl-tint-hi) / 0.12), rgb(var(--gl-smoke) / 0.18));
   padding: 1.2rem;
   box-shadow: var(--shadow-raised), inset 0 1px 0 rgb(255 255 255 / 19%), inset 0 -1px 0 rgb(10 3 20 / 44%), inset 1px 0 0 rgb(255 255 255 / 5%);
+}
+
+.question-panel::before,
+.invalid-link-card::before {
+  position: absolute;
+  top: 0;
+  left: 8%;
+  width: 60%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(229 207 255 / 64%) 40%, rgb(117 215 176 / 32%) 64%, transparent);
+  content: "";
+  pointer-events: none;
 }
 
 .question-index {
@@ -509,7 +557,7 @@ textarea:focus-visible {
   border-left: 2px solid #a98aef;
   background:
     linear-gradient(120deg, rgb(216 197 255 / 6%), transparent 42%),
-    linear-gradient(125deg, rgb(64 41 95 / 94%), rgb(43 32 60 / 97%));
+    linear-gradient(125deg, rgb(var(--gl-tint-hi) / 0.30), rgb(var(--gl-smoke) / 0.36));
   color: #e1d4f7;
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 12%), inset 0 -1px 0 rgb(10 5 19 / 35%);
 }
@@ -520,7 +568,7 @@ textarea:focus-visible {
   border: 1px solid rgb(198 169 255 / 18%);
   border-radius: 0.95rem;
   background-color: var(--glass-option);
-  background-image: linear-gradient(138deg, rgb(226 213 255 / 5%), transparent 46%), linear-gradient(135deg, rgb(54 40 70 / 31%), rgb(38 29 51 / 38%));
+  background-image: linear-gradient(138deg, rgb(var(--gl-lilac) / 0.05), transparent 46%);
   padding: 0.9rem 1rem;
   color: #f3edff;
   text-align: left;
@@ -530,7 +578,8 @@ textarea:focus-visible {
 
 .option-button:hover {
   border-color: rgb(192 160 255 / 46%);
-  background-image: linear-gradient(138deg, rgb(226 213 255 / 8%), transparent 46%), linear-gradient(135deg, rgb(65 48 84 / 74%), rgb(47 36 62 / 82%));
+  background-color: rgb(var(--gl-tint-hi) / 0.35);
+  background-image: linear-gradient(138deg, rgb(var(--gl-lilac) / 0.09), transparent 46%);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 12%), 0 9px 20px rgb(6 2 16 / 28%);
   transform: translateY(-1px);
 }
@@ -540,7 +589,7 @@ textarea:focus-visible {
   background-color: var(--glass-selected);
   background-image:
     radial-gradient(ellipse at 88% 0%, rgb(117 215 176 / 13%), transparent 60%),
-    linear-gradient(120deg, rgb(20 91 80 / 64%), rgb(8 127 104 / 55%) 54%, rgb(66 42 99 / 60%));
+    linear-gradient(120deg, rgb(var(--gl-jade) / 0.10), rgb(var(--gl-tint) / 0.10));
   color: #fff;
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 24%), inset 0 0 0 1px rgb(119 222 191 / 17%), inset 0 -1px 0 rgb(5 36 32 / 48%), 0 12px 26px rgb(6 2 18 / 38%), 0 0 18px rgb(21 158 154 / 13%);
 }
@@ -581,7 +630,8 @@ textarea:focus-visible {
   width: 100%;
   border: 1px solid rgb(201 164 92 / 17%);
   border-radius: 0.9rem;
-  background: linear-gradient(145deg, rgb(28 19 41 / 62%), rgb(39 27 57 / 68%));
+  background-color: var(--glass-input);
+  background-image: linear-gradient(145deg, rgb(var(--gl-lilac) / 0.04), rgb(var(--gl-smoke) / 0.18));
   padding: 0.9rem 1rem;
   color: #fbf8ff;
   font-size: 1rem;
@@ -596,7 +646,7 @@ textarea:focus-visible {
 
 .answer-field:focus {
   border-color: #ad8bf2;
-  background: rgb(38 17 65 / 78%);
+  background: rgb(var(--gl-field) / 0.56);
   outline: 0;
   box-shadow: 0 0 0 4px rgb(152 116 232 / 18%), inset 0 2px 6px rgb(6 2 16 / 18%);
 }
@@ -607,7 +657,7 @@ textarea:focus-visible {
   background-color: var(--glass-main);
   background-image:
     radial-gradient(ellipse at 100% 0%, rgb(21 158 154 / 7%), transparent 15rem),
-    linear-gradient(145deg, rgb(55 39 76 / 65%), rgb(40 29 56 / 73%));
+    linear-gradient(145deg, rgb(var(--gl-tint-hi) / 0.26), rgb(var(--gl-smoke) / 0.3));
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 13%), inset 0 -1px 0 rgb(12 6 23 / 40%), 0 12px 30px rgb(5 2 14 / 24%);
 }
 
@@ -628,11 +678,11 @@ textarea:focus-visible {
   border: 1px solid rgb(195 163 255 / 24%);
   border-radius: 1.1rem;
   background-color: var(--glass-raised);
-  background-image: linear-gradient(135deg, rgb(216 197 255 / 8%), transparent 50%), linear-gradient(135deg, rgb(64 41 95 / 78%), rgb(48 32 68 / 84%));
+  background-image: linear-gradient(135deg, rgb(216 197 255 / 8%), transparent 50%), linear-gradient(135deg, rgb(var(--gl-tint-hi) / 0.26), rgb(var(--gl-smoke) / 0.32));
   color: #eee5ff;
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 11%), 0 10px 24px rgb(6 2 16 / 24%);
-  -webkit-backdrop-filter: blur(12px) saturate(130%);
-  backdrop-filter: blur(12px) saturate(130%);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .review-section {
@@ -642,13 +692,13 @@ textarea:focus-visible {
   background-color: var(--glass-raised);
   background-image:
     linear-gradient(138deg, rgb(216 197 255 / 5%), transparent 42%),
-    linear-gradient(145deg, rgb(64 41 95 / 80%), rgb(48 32 68 / 86%) 76%, rgb(36 27 50 / 90%));
+    linear-gradient(145deg, rgb(var(--gl-tint-hi) / 0.30), rgb(var(--gl-smoke) / 0.38) 76%, rgb(var(--gl-smoke) / 0.44));
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 14%), inset 0 -1px 0 rgb(12 6 22 / 38%), 0 11px 24px rgb(6 2 16 / 30%);
 }
 
 .review-note {
   border: 1px solid rgb(193 160 255 / 18%);
-  background: rgb(58 34 92 / 76%);
+  background: rgb(var(--gl-tint-hi) / 0.32);
   color: #d8c9f1;
 }
 
@@ -666,33 +716,40 @@ textarea:focus-visible {
 
 .selection-chip {
   border: 1px solid rgb(112 190 165 / 23%);
-  background: linear-gradient(135deg, rgb(35 79 74 / 90%), rgb(48 26 78 / 94%));
+  background: linear-gradient(135deg, rgb(35 79 74 / 0.42), rgb(var(--gl-tint) / 0.48));
   color: #e4f5ed;
 }
 
 .floating-nav {
   border: 1px solid rgb(196 165 255 / 26%);
-  background: linear-gradient(145deg, rgb(55 39 76 / 70%), rgb(30 22 44 / 76%));
+  background: linear-gradient(145deg, rgb(var(--gl-tint-hi) / 0.66), rgb(var(--gl-smoke) / 0.72));
   box-shadow: 0 14px 32px rgb(5 2 14 / 48%), inset 0 1px 0 rgb(255 255 255 / 12%);
   padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
-  backdrop-filter: none;
+  -webkit-backdrop-filter: blur(12px) saturate(var(--gl-saturation-mobile));
+  backdrop-filter: blur(12px) saturate(var(--gl-saturation-mobile));
 }
 
 .wireframe-accordion {
   border-color: rgb(190 157 245 / 20%);
-  background: linear-gradient(140deg, rgb(57 41 81 / 78%), rgb(36 27 50 / 84%));
+  background: linear-gradient(140deg, rgb(var(--gl-tint-hi) / 0.34), rgb(var(--gl-smoke) / 0.4));
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 8%), 0 8px 18px rgb(7 2 17 / 18%);
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass-surface,
   .preview-notice,
   .progress-panel,
-  .preparation-card,
-  .journey-card,
-  .questionnaire-main-surface,
-  .landing-hero-panel {
+  .floating-nav {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
     background-color: #302044;
+  }
+
+  .landing-hero-panel::before,
+  .preparation-card::before,
+  .journey-card::before,
+  .questionnaire-main-surface::before {
+    background-color: rgb(var(--gl-tint) / 0.88);
+    background-image: linear-gradient(145deg, rgb(var(--gl-tint-hi) / 0.42), rgb(var(--gl-smoke) / 0.56));
   }
 }
 
@@ -795,7 +852,126 @@ textarea:focus-visible {
     border-color: transparent;
     background: transparent;
     box-shadow: none;
+    -webkit-backdrop-filter: none;
     backdrop-filter: none;
+  }
+
+  .landing-hero-panel::before,
+  .preparation-card::before,
+  .journey-card::before,
+  .questionnaire-main-surface::before {
+    -webkit-backdrop-filter: blur(var(--gl-blur-plate)) saturate(var(--gl-saturation));
+    backdrop-filter: blur(var(--gl-blur-plate)) saturate(var(--gl-saturation));
+  }
+}
+
+@media (max-width: 639px) {
+  .landing-hero-panel::before,
+  .preparation-card::before,
+  .journey-card::before,
+  .questionnaire-main-surface::before {
+    -webkit-backdrop-filter: blur(var(--gl-blur-mobile)) saturate(var(--gl-saturation-mobile));
+    backdrop-filter: blur(var(--gl-blur-mobile)) saturate(var(--gl-saturation-mobile));
+  }
+
+  .preview-notice,
+  .progress-panel {
+    -webkit-backdrop-filter: blur(12px) saturate(var(--gl-saturation-mobile));
+    backdrop-filter: blur(12px) saturate(var(--gl-saturation-mobile));
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .landing-hero-panel::before,
+  .preparation-card::before,
+  .journey-card::before,
+  .questionnaire-main-surface::before {
+    background-color: rgb(var(--gl-tint) / 0.94);
+    background-image: linear-gradient(145deg, rgb(var(--gl-tint-hi) / 0.52), rgb(var(--gl-smoke) / 0.72));
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .preview-notice,
+  .progress-panel,
+  .floating-nav {
+    background-color: #302044;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .question-panel {
+    background-color: rgb(var(--gl-tint-hi) / 0.52);
+  }
+
+  .option-button {
+    background-color: rgb(var(--gl-smoke) / 0.42);
+  }
+
+  .answer-field {
+    background-color: rgb(var(--gl-field) / 0.62);
+  }
+}
+
+@media (forced-colors: active) {
+  .portal-shell::before,
+  .questionnaire-shell::before,
+  .landing-hero-panel::before,
+  .landing-hero-panel::after,
+  .preparation-card::before,
+  .preparation-card::after,
+  .journey-card::before,
+  .journey-card::after,
+  .questionnaire-main-surface::before,
+  .questionnaire-main-surface::after {
+    display: none;
+  }
+
+  .landing-hero-panel,
+  .preparation-card,
+  .journey-card,
+  .questionnaire-main-surface,
+  .question-panel,
+  .option-button,
+  .answer-field,
+  .primary-button,
+  .secondary-button {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    box-shadow: none;
+    forced-color-adjust: auto;
+  }
+
+  .option-button {
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  .option-button[aria-pressed="true"] {
+    border: 2px solid Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .selection-indicator {
+    border: 1px solid ButtonText;
+    background: ButtonFace;
+    color: ButtonText;
+  }
+
+  .option-button[aria-pressed="true"] .selection-indicator {
+    border-color: HighlightText;
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .primary-button:focus-visible,
+  .secondary-button:focus-visible,
+  .option-button:focus-visible,
+  summary:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 3px;
   }
 }
 

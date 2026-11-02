@@ -55,12 +55,12 @@ export function QuestionCard({
       </div>
 
       {question.note && (
-        <aside className="helper-panel ml-11 mt-4 rounded-r-xl border-l-2 px-4 py-3 text-sm leading-6">
+        <aside className="helper-panel mt-4 rounded-r-xl border-l-2 px-4 py-3 text-sm leading-6 sm:ml-11">
           {question.note}
         </aside>
       )}
 
-      <div className="ml-11 mt-5 space-y-2.5" role="group" aria-label={`${question.id} answer options`}>
+      <div className="mt-5 space-y-2.5 sm:ml-11" role="group" aria-label={`${question.id} answer options`}>
         {question.opts.map((option) => {
           const selected = selectedValues.includes(option)
           const isRecommended = recommended.includes(option)
@@ -68,22 +68,24 @@ export function QuestionCard({
             <button
               key={option}
               type="button"
-              className="option-button flex items-center gap-3"
+              className="option-button flex items-start gap-3"
               aria-pressed={selected}
               onClick={() => onOption(option, !selected)}
             >
-              <span className="selection-indicator" aria-hidden="true">
+              <span className="selection-indicator mt-1" aria-hidden="true">
                 {selected ? question.multi ? <Check size={13} strokeWidth={2.5} /> : <Circle size={8} fill="currentColor" /> : null}
               </span>
-              <span className="min-w-0 flex-1 text-base leading-6">{option}</span>
-              {isRecommended && <span className="suggested-badge rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em]">Suggested</span>}
+              <span className="min-w-0 flex-1">
+                <span className="block whitespace-normal break-words text-base leading-6">{option}</span>
+                {isRecommended && <span className="suggested-badge mt-2 inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em]">Suggested</span>}
+              </span>
             </button>
           )
         })}
       </div>
 
       {!question.gating && (
-        <div className="ml-11 mt-5 space-y-4">
+        <div className="mt-5 space-y-4 sm:ml-11">
           <div>
             <label htmlFor={`${question.id}-write-in`} className="mb-2 block text-sm font-semibold text-plum">Your own answer (optional)</label>
             <textarea
@@ -117,14 +119,14 @@ export function QuestionCard({
       )}
 
       {question.gating && hasAnswer && (
-        <div className="ml-11 mt-4">
+        <div className="mt-4 sm:ml-11">
           <button type="button" onClick={onClear} className="inline-flex min-h-10 items-center gap-2 text-xs font-semibold text-ink-muted hover:text-royal">
             <RotateCcw size={14} aria-hidden="true" /> Clear selection
           </button>
         </div>
       )}
 
-      {question.wf && <div className="ml-11"><WireframeExample reference={question.wf} entry={wireframe} /></div>}
+      {question.wf && <div className="sm:ml-11"><WireframeExample reference={question.wf} entry={wireframe} /></div>}
     </article>
   )
 }

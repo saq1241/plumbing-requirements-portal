@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
+import type { ReactNode } from "react"
 import { AnimatePresence, motion, useReducedMotion } from "motion/react"
 import Link from "next/link"
 import {
@@ -48,13 +49,29 @@ import { QuestionCard } from "./question-card"
 
 type JourneyStage = "preparation" | "tier" | "questions" | "review" | "complete"
 const journeyVariants = {
-  enter: (direction: number) => ({ opacity: 0, y: direction > 0 ? 10 : -10 }),
+  enter: (direction: number) => ({ y: direction > 0 ? 4 : -4 }),
+  center: { y: 0 },
+  exit: (direction: number) => ({ y: direction > 0 ? -4 : 4 }),
+}
+const stageContentVariants = {
+  enter: { opacity: 0, y: 6 },
   center: { opacity: 1, y: 0 },
-  exit: (direction: number) => ({ opacity: 0, y: direction > 0 ? -10 : 10 }),
+  exit: { opacity: 0, y: -6 },
 }
 
 type QuestionnaireExperienceProps = {
   spec: QuestionnaireClientSpecification
+}
+
+function StageContent({ children, reduceMotion }: { children: ReactNode; reduceMotion: boolean | null }) {
+  return (
+    <motion.div
+      variants={stageContentVariants}
+      transition={reduceMotion ? { duration: 0 } : { duration: 0.2, ease: [0.22, 0.68, 0, 1] }}
+    >
+      {children}
+    </motion.div>
+  )
 }
 
 function answerLabel(question: QuestionnaireQuestion, state: QuestionnaireState): string {
@@ -189,6 +206,13 @@ export function QuestionnaireExperience({ spec }: QuestionnaireExperienceProps) 
   const whatsAppNumber = spec.backend_spec.owner_whatsapp_number
   const whatsAppDigits = /^\+?[1-9]\d{7,14}$/.test(whatsAppNumber) ? whatsAppNumber.replace("+", "") : null
   const whatsAppTooLong = (prepared?.summary.length ?? 0) > 1800
+  const stageKey = stage === "questions" ? `${stage}-${state.currentSectionId}` : stage
+
+  useEffect(() => {
+    if (reduceMotion) {
+      transitionLock.current = false
+    }
+  }, [stageKey, reduceMotion])
 
   return (
     <main className="questionnaire-shell min-h-screen">
@@ -219,7 +243,7 @@ export function QuestionnaireExperience({ spec }: QuestionnaireExperienceProps) 
           custom={transitionDirection}
         >
           <motion.div
-            key={stage === "questions" ? `${stage}-${state.currentSectionId}` : stage}
+            key={stageKey}
             custom={transitionDirection}
             variants={journeyVariants}
             initial={reduceMotion ? false : "enter"}
@@ -232,6 +256,7 @@ export function QuestionnaireExperience({ spec }: QuestionnaireExperienceProps) 
           >
         {stage === "preparation" && (
           <section className="journey-card mt-6">
+            <StageContent reduceMotion={reduceMotion}>
             <p className="eyebrow">Before we begin</p>
             <h1 className="journey-title">{spec.form_spec.start_screen.title}</h1>
             <p className="mt-3 max-w-2xl text-base leading-7 text-ink-muted">A few items may make the questions easier. If you don’t have them nearby, that’s okay — you can still continue.</p>
@@ -255,11 +280,13 @@ export function QuestionnaireExperience({ spec }: QuestionnaireExperienceProps) 
               <button type="button" onClick={() => setStage("tier")} className="min-h-12 text-sm font-medium text-ink-muted underline-offset-4 hover:text-royal hover:underline">Continue without them</button>
               <button type="button" onClick={() => setStage("tier")} className="primary-button inline-flex min-h-13 items-center justify-center gap-3 px-7 text-sm">I’m ready <ArrowRight size={17} aria-hidden="true" /></button>
             </div>
+            </StageContent>
           </section>
         )}
 
         {stage === "tier" && (
           <section className="questionnaire-main-surface mt-6">
+            <StageContent reduceMotion={reduceMotion}>
             <div className="mb-5 px-1">
               <p className="eyebrow">First, choose what you need</p>
               <h1 className="journey-title">There’s no wrong answer.</h1>
@@ -290,11 +317,13 @@ export function QuestionnaireExperience({ spec }: QuestionnaireExperienceProps) 
                 className="primary-button inline-flex min-h-13 items-center gap-3 px-7 text-sm"
               >Continue <ArrowRight size={17} aria-hidden="true" /></button>
             </div>
+            </StageContent>
           </section>
         )}
 
         {stage === "questions" && currentSection && (
           <section className="questionnaire-main-surface mt-6">
+            <StageContent reduceMotion={reduceMotion}>
             <div className="mb-5 px-1">
               <p className="eyebrow">One section at a time</p>
               <h1 className="journey-title">{currentSection.title}</h1>
@@ -338,11 +367,13 @@ export function QuestionnaireExperience({ spec }: QuestionnaireExperienceProps) 
                 className="primary-button inline-flex min-h-12 items-center justify-center gap-2 px-5 text-sm sm:min-h-13 sm:px-7"
               >{state.currentSectionId === getLastApplicableSection(spec, state) ? "Review answers" : "Continue"}<ArrowRight size={16} aria-hidden="true" /></button>
             </div>
+            </StageContent>
           </section>
         )}
 
         {stage === "review" && (
           <section className="questionnaire-main-surface mt-6">
+            <StageContent reduceMotion={reduceMotion}>
             <div className="mb-6 px-1">
               <p className="eyebrow">A final look</p>
               <h1 className="journey-title">Review your answers</h1>
@@ -371,7 +402,7 @@ export function QuestionnaireExperience({ spec }: QuestionnaireExperienceProps) 
                         <span className="mt-1 block truncate text-base font-semibold text-plum">{section.title}</span>
                         <span className="mt-1 block text-sm text-ink-muted">{answeredCount} of {answers.length} answered</span>
                       </button>
-                      <button type="button" onClick={() => navigate(-1, () => { setState((current) => goToApplicableSection(spec, current, section.id)); setStage("questions") })} className="secondary-button min-h-10 px-4 text-xs">Edit</button>
+                      <button type="button" onClick={() => navigate(-1, () => { setState((current) => goToApplicableSection(spec, current, section.id)); setStage("questions") })} className="secondary-button secondary-button--compact">Edit</button>
                     </div>
                     {isExpanded && (
                       <div className="portal-divider space-y-0 border-t px-4 sm:px-5">
@@ -403,11 +434,13 @@ export function QuestionnaireExperience({ spec }: QuestionnaireExperienceProps) 
               <button type="button" onClick={() => { const last = sections[sections.length - 1]; if (last) setState((current) => goToApplicableSection(spec, current, last.id)); setConfirmingSubmission(false); setStage("questions") }} className="secondary-button w-full sm:w-auto"><ArrowLeft size={16} aria-hidden="true" /> Back to questions</button>
               <button type="button" onClick={() => setConfirmingSubmission(true)} className="primary-button inline-flex min-h-13 w-full items-center justify-center gap-2 px-6 text-sm sm:w-auto">Finish <CheckCircle2 size={17} aria-hidden="true" /></button>
             </div>
+            </StageContent>
           </section>
         )}
 
         {stage === "complete" && prepared && (
           <section className="journey-card mt-8">
+            <StageContent reduceMotion={reduceMotion}>
             <div className="completion-mark mx-auto grid h-14 w-14 place-items-center rounded-full"><CheckCircle2 size={28} strokeWidth={1.7} aria-hidden="true" /></div>
             <p className="eyebrow mt-5 justify-center">Questionnaire complete</p>
             <h1 className="mt-3 text-center text-3xl font-medium tracking-[-0.05em] text-plum sm:text-4xl">Thank you, Qontrac Industries.</h1>
@@ -429,6 +462,7 @@ export function QuestionnaireExperience({ spec }: QuestionnaireExperienceProps) 
             <div className="portal-divider mt-8 flex justify-center border-t pt-6">
               <button type="button" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-royal hover:underline" onClick={() => { setState(createQuestionnaireState(spec)); setPrepared(null); setExpandedSections([]); setConfirmingSubmission(false); setStage("preparation"); setMessage("") }}><RotateCcw size={15} aria-hidden="true" /> Start a new preview</button>
             </div>
+            </StageContent>
           </section>
         )}
 
